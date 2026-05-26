@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>清掃点検表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600&display=swap');
+
+  :root {
+    --bg: #f4f2ee;
+    --surface: #ffffff;
+    --border: #d6d0c4;
+    --border-dark: #b0a898;
+    --text: #2a2520;
+    --text-muted: #7a736a;
+    --accent: #3d6b4f;
+    --accent-light: #e8f0eb;
+    --accent-dark: #2a4d38;
+    --good: #2e7d4f;
+    --good-bg: #eaf5ef;
+    --fair: #b07a00;
+    --fair-bg: #fdf6e3;
+    --bad: #c0392b;
+    --bad-bg: #fdf0ee;
+    --header-bg: #2a2520;
+    --section-bg: #3d6b4f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* ─── Header ─── */
+  .app-header {
+    background: var(--header-bg);
+    color: #fff;
+    padding: 20px 24px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  }
+  .app-header h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.25rem;
+    letter-spacing: 0.12em;
+    margin-bottom: 12px;
+  }
+  .header-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  @media(max-width:600px){
+    .header-fields { grid-template-columns: 1fr 1fr; }
+  }
+  .header-field label {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: #aaa;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .header-field input {
+    width: 100%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: #fff;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.82rem;
+  }
+  .header-field input::placeholder { color: rgba(255,255,255,0.35); }
+  .header-field input:focus { outline: none; border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.15); }
+
+  /* ─── Progress ─── */
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.12);
+    border-radius: 3px;
+    height: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: #6fba8a;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-label {
+    font-size: 0.68rem;
+    color: #aaa;
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  /* ─── Main ─── */
+  main { max-width: 900px; margin: 0 auto; padding: 20px 16px; }
+
+  /* ─── Section ─── */
+  .section {
+    margin-bottom: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  }
+  .section-header {
+    background: var(--section-bg);
+    color: #fff;
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-header .badge {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+
+  /* ─── Table ─── */
+  .insp-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+  }
+  .insp-table thead th {
+    background: #f0ece5;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--border);
+    text-align: center;
+  }
+  .insp-table thead th:first-child { text-align: left; }
+  .insp-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .insp-table tbody tr:last-child { border-bottom: none; }
+  .insp-table tbody tr:hover { background: #fafaf7; }
+
+  .item-num {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .item-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .item-points {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+  td.cell-name { padding: 10px 12px; }
+  td.cell-eval { padding: 8px 6px; text-align: center; width: 60px; }
+  td.cell-note { padding: 8px 8px; width: 200px; min-width: 120px; }
+
+  .note-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 7px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.78rem;
+    background: #fafaf7;
+    color: var(--text);
+    resize: none;
+    height: 36px;
+    transition: border-color 0.2s, height 0.2s;
+  }
+  .note-input:focus { outline: none; border-color: var(--accent); background: #fff; height: 54px; }
+
+  /* ─── Radio buttons ─── */
+  .radio-group { display: flex; gap: 4px; justify-content: center; }
+  .radio-item { position: relative; }
+  .radio-item input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .radio-item label {
+    display: block;
+    width: 36px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 4px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-muted);
+    user-select: none;
+  }
+  .radio-item input:checked + label.good  { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+  .radio-item input:checked + label.fair  { background: var(--fair-bg); border-color: var(--fair); color: var(--fair); }
+  .radio-item input:checked + label.bad   { background: var(--bad-bg);  border-color: var(--bad);  color: var(--bad); }
+  .radio-item label:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Row highlight by result */
+  tr.result-bad   { background: #fff8f7; }
+  tr.result-fair  { background: #fffdf0; }
+  tr.result-good  { background: #f7fdf9; }
+
+  /* ─── Special note section ─── */
+  .special-section {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  }
+  .special-section h2 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .special-textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.82rem;
+    background: #fafaf7;
+    color: var(--text);
+    resize: vertical;
+    min-height: 80px;
+  }
+  .special-textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+
+  /* ─── Footer Buttons ─── */
+  .footer-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    z-index: 100;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+  }
+  .btn {
+    padding: 11px 28px;
+    border-radius: 6px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: none;
+    letter-spacing: 0.06em;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-secondary {
+    background: #fff;
+    color: var(--text);
+    border: 1.5px solid var(--border-dark);
+  }
+  .btn-secondary:hover { background: var(--bg); }
+
+  /* ─── Summary modal ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 28px 24px 20px;
+    max-width: 480px;
+    width: 92%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal h2 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.05rem;
+    margin-bottom: 16px;
+    letter-spacing: 0.1em;
+  }
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .summary-card {
+    border-radius: 8px;
+    padding: 14px 8px;
+    text-align: center;
+  }
+  .summary-card .num { font-size: 2rem; font-weight: 700; line-height: 1; }
+  .summary-card .lbl { font-size: 0.72rem; margin-top: 4px; }
+  .s-good { background: var(--good-bg); color: var(--good); }
+  .s-fair { background: var(--fair-bg); color: var(--fair); }
+  .s-bad  { background: var(--bad-bg);  color: var(--bad); }
+  .summary-issues { margin-bottom: 16px; }
+  .summary-issues h3 { font-size: 0.8rem; font-weight: 700; color: var(--bad); margin-bottom: 6px; }
+  .issue-item { font-size: 0.78rem; padding: 5px 8px; background: var(--bad-bg); border-radius: 4px; margin-bottom: 4px; }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+  <h1>清掃点検表</h1>
+  <div class="header-fields">
+    <div class="header-field">
+      <label>点検日</label>
+      <input type="date" id="insp-date">
+    </div>
+    <div class="header-field">
+      <label>現場名</label>
+      <input type="text" id="insp-site" placeholder="現場名を入力">
+    </div>
+    <div class="header-field">
+      <label>点検者</label>
+      <input type="text" id="insp-person" placeholder="氏名を入力">
+    </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-fill"></div>
+  </div>
+  <div class="progress-label" id="progress-label">0 / 47 項目完了</div>
+</header>
+
+<main id="main-content"></main>
+
+<!-- 特記事項 -->
+<div style="max-width:900px;margin:0 auto;padding:0 16px 8px;">
+  <div class="special-section">
+    <h2>特記事項</h2>
+    <textarea class="special-textarea" id="special-note" placeholder="特記事項があれば入力してください"></textarea>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer-bar">
+  <button class="btn btn-secondary" onclick="showSummary()">結果確認</button>
+  <button class="btn btn-primary" onclick="exportExcel()">Excelで保存</button>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>点検結果サマリー</h2>
+    <div class="summary-grid">
+      <div class="summary-card s-good"><div class="num" id="s-good">0</div><div class="lbl">良</div></div>
+      <div class="summary-card s-fair"><div class="num" id="s-fair">0</div><div class="lbl">可</div></div>
+      <div class="summary-card s-bad"><div class="num"  id="s-bad">0</div><div class="lbl">不可</div></div>
+    </div>
+    <div class="summary-issues" id="issues-wrap"></div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeModal()">閉じる</button>
+      <button class="btn btn-primary" onclick="exportExcel();closeModal()">Excelで保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── データ定義 ───
+const SECTIONS = [
+  {
+    name: "玄関", items: [
+      { num:"①", name:"扉ガラス",       points:"把手汚れ・金属汚れ・ガラス汚れ" },
+      { num:"②", name:"床面・フロアマット", points:"歩行動線・隅幅木・光沢度・土砂等" },
+      { num:"③", name:"壁面",           points:"スイッチ周り手あか・高所埃・低所汚れ" },
+      { num:"④", name:"案内表示板・看板類", points:"埃・スタンド下部汚れ・手あか" },
+      { num:"⑤", name:"照明器具",       points:"埃・汚れ" },
+      { num:"⑥", name:"屑入その他備品", points:"容器および周辺汚れ" },
+      { num:"⑦", name:"植木鉢および外周", points:"ゴミ・汚れ" },
+    ]
+  },
+  {
+    name: "ＥＬＶ", items: [
+      { num:"①", name:"床面",     points:"隅々・光沢・埃" },
+      { num:"②", name:"幅木",     points:"埃・汚れ・モップによる汚れ傷" },
+      { num:"③", name:"扉溝",     points:"土砂・金属艶・汚れ" },
+      { num:"④", name:"壁面・鏡", points:"手垢・上部埃曇り・下部汚れ靴跡・ドア周囲埃" },
+      { num:"⑤", name:"スイッチ板", points:"手垢・上部埃・下部汚れ・埃" },
+    ]
+  },
+  {
+    name: "廊下・ＥＬＶ・ホール", items: [
+      { num:"①", name:"床",           points:"歩行動線・隅々埃・ヒールマーク" },
+      { num:"②", name:"幅木",         points:"埃・汚れ・モップ汚れ傷・ワックス付着" },
+      { num:"③", name:"壁面",         points:"スイッチ回り手あか・低所汚れ・高所埃" },
+      { num:"④", name:"扉",           points:"ノブ周り手あか・扉周囲埃・扉下部汚れ" },
+      { num:"⑤", name:"ＥＶ表扉・三方枠", points:"表扉周囲埃・スイッチ回り・枠手垢" },
+      { num:"⑥", name:"案内表示・装飾金具", points:"埃・手垢・艶" },
+      { num:"⑦", name:"手すり・吸排気口", points:"埃・汚れ" },
+    ]
+  },
+  {
+    name: "階段", items: [
+      { num:"①", name:"床及び踊場",   points:"歩行動線・隅" },
+      { num:"②", name:"踏面・け込板", points:"汚れ・埃" },
+      { num:"③", name:"手摺り",       points:"手あか・埃・下部汚れ" },
+      { num:"④", name:"ささら巾木",   points:"埃・汚れ・きず・ワックス付着" },
+      { num:"⑤", name:"ノンスリップ", points:"溝・すべり・光沢" },
+      { num:"⑥", name:"壁面",         points:"高所埃・手あか" },
+      { num:"⑦", name:"照明器具",     points:"埃・汚れ" },
+    ]
+  },
+  {
+    name: "トイレ", items: [
+      { num:"①", name:"床",           points:"小便器下部・隅々埃・ヒールマーク" },
+      { num:"②", name:"壁面",         points:"汚れ・埃・ハンドドライヤー周辺埃" },
+      { num:"③", name:"扉・仕切り",   points:"ノブ周り手垢・扉周囲埃・扉下部上部埃" },
+      { num:"④", name:"鏡",           points:"上部曇り・埃・下部水汚れ" },
+      { num:"⑤", name:"洗面台",       points:"台の光沢や水垢・下部戸棚汚れ・カルキ付着" },
+      { num:"⑥", name:"便器",         points:"便座内外汚れ埃・フィルター・ウォシュレット" },
+      { num:"⑦", name:"金具（バルブ・蛇口等）", points:"光沢・汚れ・埃" },
+      { num:"⑧", name:"吸排気口",     points:"埃" },
+    ]
+  },
+  {
+    name: "給湯室", items: [
+      { num:"①", name:"床面",     points:"隅々埃汚れ・流し台下部汚れ" },
+      { num:"②", name:"壁面及び扉", points:"下部汚れ・上部埃・壁面汚れ" },
+      { num:"③", name:"流し台",   points:"汚れ・しみ・水垢" },
+      { num:"④", name:"給湯器具", points:"埃・汚れ" },
+      { num:"⑤", name:"吸排気口", points:"埃・におい" },
+    ]
+  },
+  {
+    name: "外周・屋上・駐車場", items: [
+      { num:"①", name:"床",       points:"歩行動線・隅々土砂埃・ゴミ異物付着" },
+      { num:"②", name:"外柱・壁面", points:"高所埃・低所汚れ・金属汚れ" },
+      { num:"③", name:"フロアマット", points:"土砂・埃" },
+      { num:"④", name:"犬走り",   points:"歩行動線・土砂・埃" },
+      { num:"⑤", name:"排水溝",   points:"土砂・ゴミ・におい" },
+    ]
+  },
+  {
+    name: "資機材倉庫", items: [
+      { num:"全般", name:"全般", points:"整理整頓・ホコリ" },
+    ]
+  },
+  {
+    name: "ゴミ集積場", items: [
+      { num:"全般", name:"全般", points:"におい・ゴミの散乱・整頓" },
+    ]
+  },
+  {
+    name: "控室", items: [
+      { num:"全般", name:"全般", points:"整理整頓・ホコリ・掲示物" },
+    ]
+  },
+];
+
+// ─── 状態 ───
+const state = {};
+
+// ─── 初期化 ───
+(function init() {
+  // 今日の日付をデフォルト
+  document.getElementById('insp-date').value = new Date().toLocaleDateString('sv-SE');
+
+  const main = document.getElementById('main-content');
+
+  SECTIONS.forEach((sec, si) => {
+    const totalItems = sec.items.length;
+    const secDiv = document.createElement('div');
+    secDiv.className = 'section';
+
+    secDiv.innerHTML = `
+      <div class="section-header">
+        ${sec.name}
+        <span class="badge">${totalItems}項目</span>
+      </div>
+      <table class="insp-table">
+        <thead>
+          <tr>
+            <th style="text-align:left">点検項目 / 評価ポイント</th>
+            <th>良</th><th>可</th><th>不可</th>
+            <th>備考</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-${si}"></tbody>
+      </table>`;
+    main.appendChild(secDiv);
+
+    const tbody = secDiv.querySelector(`#tbody-${si}`);
+    sec.items.forEach((item, ii) => {
+      const key = `${si}-${ii}`;
+      state[key] = { eval: '', note: '' };
+
+      const tr = document.createElement('tr');
+      tr.id = `row-${key}`;
+      tr.innerHTML = `
+        <td class="cell-name">
+          <div class="item-num">${item.num}</div>
+          <div class="item-name">${item.name}</div>
+          <div class="item-points">${item.points}</div>
+        </td>
+        <td class="cell-eval">
+          <div class="radio-group">
+            <div class="radio-item">
+              <input type="radio" name="eval-${key}" id="g-${key}" value="良">
+              <label for="g-${key}" class="good">良</label>
+            </div>
+          </div>
+        </td>
+        <td class="cell-eval">
+          <div class="radio-group">
+            <div class="radio-item">
+              <input type="radio" name="eval-${key}" id="f-${key}" value="可">
+              <label for="f-${key}" class="fair">可</label>
+            </div>
+          </div>
+        </td>
+        <td class="cell-eval">
+          <div class="radio-group">
+            <div class="radio-item">
+              <input type="radio" name="eval-${key}" id="b-${key}" value="不可">
+              <label for="b-${key}" class="bad">不可</label>
+            </div>
+          </div>
+        </td>
+        <td class="cell-note">
+          <textarea class="note-input" placeholder="備考" data-key="${key}"></textarea>
+        </td>`;
+      tbody.appendChild(tr);
+
+      // イベント
+      tr.querySelectorAll('input[type="radio"]').forEach(r => {
+        r.addEventListener('change', () => {
+          state[key].eval = r.value;
+          const row = document.getElementById(`row-${key}`);
+          row.className = r.value === '良' ? 'result-good' : r.value === '可' ? 'result-fair' : 'result-bad';
+          updateProgress();
+        });
+      });
+      tr.querySelector('textarea').addEventListener('input', e => {
+        state[key].note = e.target.value;
+      });
+    });
+  });
+})();
+
+// ─── プログレス更新 ───
+function updateProgress() {
+  const keys = Object.keys(state);
+  const done = keys.filter(k => state[k].eval !== '').length;
+  const pct = Math.round(done / keys.length * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${done} / ${keys.length} 項目完了`;
+}
+
+// ─── サマリー ───
+function showSummary() {
+  let good=0, fair=0, bad=0;
+  const issues = [];
+  SECTIONS.forEach((sec, si) => {
+    sec.items.forEach((item, ii) => {
+      const k = `${si}-${ii}`;
+      const v = state[k].eval;
+      if(v==='良') good++;
+      else if(v==='可') fair++;
+      else if(v==='不可') { bad++; issues.push(`[${sec.name}] ${item.num} ${item.name}`); }
+    });
+  });
+  document.getElementById('s-good').textContent = good;
+  document.getElementById('s-fair').textContent = fair;
+  document.getElementById('s-bad').textContent  = bad;
+
+  const wrap = document.getElementById('issues-wrap');
+  if(issues.length > 0) {
+    wrap.innerHTML = `<h3>不可項目（${issues.length}件）</h3>` +
+      issues.map(i => `<div class="issue-item">⚠ ${i}</div>`).join('');
+  } else {
+    wrap.innerHTML = '<p style="font-size:0.82rem;color:#3d6b4f">不可項目はありません ✓</p>';
+  }
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+document.getElementById('modal').addEventListener('click', e => {
+  if(e.target === e.currentTarget) closeModal();
+});
+
+// ─── Excel 出力 ───
+async function exportExcel() {
+  const date    = document.getElementById('insp-date').value;
+  const site    = document.getElementById('insp-site').value || '（未記入）';
+  const person  = document.getElementById('insp-person').value || '（未記入）';
+  const special = document.getElementById('special-note').value;
+
+  const btn = document.querySelector('.btn-primary');
+  const origText = btn.textContent;
+  btn.textContent = '生成中...';
+  btn.disabled = true;
+
+  const sectionsData = SECTIONS.map((sec, si) => ({
+    name: sec.name,
+    items: sec.items.map((item, ii) => {
+      const k = `${si}-${ii}`;
+      return {
+        name:   item.name,
+        points: item.points,
+        eval:   state[k].eval || '',
+        note:   state[k].note || '',
+      };
+    })
+  }));
+
+  try {
+    const res = await fetch('/.netlify/functions/generate_excel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, site, person, special, sections: sectionsData }),
+    });
+    if (!res.ok) throw new Error(`サーバーエラー: ${res.status}`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `点検表_${site}_${date}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Excel生成に失敗しました。\n' + err.message);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
